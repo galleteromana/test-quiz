@@ -135,3 +135,44 @@ def test_choice_id_continuity_after_removal():
     c3 = question.add_choice("Terceira") # Deve pegar o ID do último (2) + 1
     
     assert c3.id == 3
+
+
+#-----------------------------------------
+
+@pytest.fixture
+def question_with_choices():
+    """
+    Cria uma questão padrão com 3 opções para ser reutilizada nos testes.
+    Configurada com max_selections=2 para testar cenários de múltipla escolha.
+    """
+    q = Question(title="Quais destes são linguagens de programação?", points=10, max_selections=2)
+    q.add_choice("Python", is_correct=True)  # ID 1
+    q.add_choice("HTML", is_correct=False)    # ID 2
+    q.add_choice("Java", is_correct=True)    # ID 3
+    return q
+
+# 1. Contagem e integridade dos dados iniciais da fixture
+def test_fixture_setup_integrity(question_with_choices):
+    assert len(question_with_choices.choices) == 3
+    assert question_with_choices.points == 10
+    assert question_with_choices.max_selections == 2
+
+# 2. Correção de uma resposta parcialmente correta
+def test_correct_selected_choices_partial_success(question_with_choices):
+    # Selecionando uma correta (1) e uma errada (2)
+    selected = [1, 2]
+    result = question_with_choices.correct_selected_choices(selected)
+    
+    # Deve retornar apenas o ID da que estava correta
+    assert result == [1]
+    assert len(result) == 1
+
+# 3. Correção de todas as respostas corretas dentro do limite
+def test_correct_selected_choices_full_success(question_with_choices):
+    # Selecionando as duas corretas (Python e Java)
+    selected = [1, 3]
+    result = question_with_choices.correct_selected_choices(selected)
+    
+    assert len(result) == 2
+    assert 1 in result
+    assert 3 in result
